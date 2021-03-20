@@ -1,9 +1,13 @@
 const scene_w = 640;
 const scene_h = 480;
 
-let player_init_x = 32;
+let that;
 
-let bg;
+let player_init_x = 64;
+
+let bg1;
+let bg2;
+
 let player;
 let enemies = [];
 let bullets = [];
@@ -12,41 +16,99 @@ let up_key;
 let down_key;
 let space_key;
 
+let score;
+let points;
+
+let meteor_list = [
+	{
+		name: "meteorDL",
+		img: "meteor_detailedLarge.png",
+		sizeX: 36,
+		sizeY: 36,
+		speed: 1
+	},
+	{
+		name: "meteorSDL",
+		img: "meteor_squareDetailedLarge.png",
+		sizeX: 36,
+		sizeY: 36,
+		speed: 1
+	},
+	{
+		name: "meteorDS",
+		img: "meteor_detailedSmall.png",
+		sizeX: 24,
+		sizeY: 24,
+		speed: 1
+	},
+	{
+		name: "meteorSDS",
+		img: "meteor_squareDetailedSmall.png",
+		sizeX: 24,
+		sizeY: 24,
+		speed: 1
+	}
+];
+
+let before_up;
+
+let particle;
+
 const BULLET_INIT_X = -1000;
 const BULLET_INIT_Y = -1000;
 
 const MAX_ENEMIES = 128;
-const MAX_BULLETS = 128;
+const MAX_BULLETS = 3;
 
 const SCREEN_MARGIN = 32;
 
 function preload () {
-	console.log("Preload");
+	
+	that = this;
+
 	this.load.image("background", "stars.jpg");
-	this.load.image("character", "PNG/Characters/woman.png");
-	this.load.image("enemy", "PNG/Characters/man.png");
-	this.load.image("bullet", "PNG/Cars/scooter.png");
+	this.load.image("ship", "PNG/Spaceships/ship_L.png");
+	meteor_list.forEach( meteor => this.load.image(meteor.name, "PNG/Spaceships/"+meteor.img));
+	this.load.image("bullet", "PNG/Spaceships/star_small.png");
+	this.load.image("explosion", "PNG/Particles/fire1.png");
 }
 
 function create () {
 
-	bg = this.add.image(scene_w/2, scene_h/2, "background");
-	player = this.add.image(player_init_x, scene_h/2, "character");
-	player.setScale(2);
+	points = 0;
+
+	enemies = [];
+	bullets = [];
+
+	before_up = true;
+
+	bg1 = this.add.image(scene_w/2, scene_h/2, "background");
+	bg1.setScale(1.25);
+
+	bg2 = this.add.image(scene_w/2 + 626, scene_h/2, "background");
+	bg2.setScale(1.25);
+
+	player = this.physics.add.image(player_init_x, scene_h/2, "ship");
+	player.setSize(42, 32);
+	player.setOffset(8, 16);
+	player.setScale(1);
+	player.angle = 90;
+
+
 
 	for (let i = 0; i < MAX_ENEMIES; i++){
 		let x = Math.random()*scene_w*10 + scene_w/2;
 		let y = Math.random()*scene_h;
+		let rand_type = Math.floor(Math.random()*4);
+		enemies.push(this.physics.add.image(x, y, meteor_list[rand_type].name));
+		enemies[i].setSize(meteor_list[rand_type].sizeX, meteor_list[rand_type].sizeY);	
 
-		console.log(x,y);
-
-	 	enemies.push(this.add.image(x, y, "enemy"));
 	}
 
 
 	for (let i = 0; i < MAX_BULLETS; i++){
-		bullets.push(this.add.image(BULLET_INIT_X, BULLET_INIT_Y, "bullet"));
-
+		bullets.push(this.physics.add.image(BULLET_INIT_X, BULLET_INIT_Y, "bullet"));
+		bullets[i].setSize(10, 10);
 		bullets[i].moving = false;
 	}
 
@@ -55,20 +117,56 @@ function create () {
 	down_key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
 	space_key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
+	enemies.forEach(function(element){
+		that.physics.add.overlap(player, element, function (p, m){
+			that.scene.restart();
+		}, null, that);
+	});
+	enemies.forEach(function(element){
+		that.physics.add.overlap(bullets, element, function (b, m){
+			m.destroy();
+			particle.emitParticleAt(element.x, element.y, 1);
+			b.x = BULLET_INIT_X;
+			b.y = BULLET_INIT_Y;
+			b.moving = false;
+			points++;
+	}, null, that);
+	});
 
+	score = this.add.text(10,10, 'Meteoritos destruidos: 0', {
+		font: 'bold 26px Arial',
+		fill: '#ffffff'
+	});
 
+	particle = this.add.particles('explosion');
+	particle.createEmitter({
+		alpha: {start: 1, end: 0},
+		scaleX: 1,
+		scaleY: 1,
+		speed: 20,
+		acceleration: -300,
+		angle: {min: 0, max: 360},
+		rotate: {min: 0, max: 360 },
+		lifespan: {min: 700, max: 1000 },
+		blendMode: 'ADD',
+		frequency: 110,
+		maxParticles: 10,
+		on: false
+	});
 }
 
 function update () {
-	if (up_key.isDown){
+
+	if (up_key.isDown && player.y > 20){
 		player.y--;
 	}
-	else if (down_key.isDown){
+	else if (down_key.isDown && player.y < scene_h - 20){
 		player.y++;
 	}
 
-	if (space_key.isDown){
+	if (space_key.isDown && before_up){
 		let found = false;
+		before_up = false;
 
 		for (let i = 0; i < MAX_BULLETS && !found; i++){
 			if (!bullets[i].moving){
@@ -79,6 +177,10 @@ function update () {
 				found = true;
 			}
 		}
+	}
+
+	if(space_key.isUp){
+		before_up = true;
 	}
 
 
@@ -98,6 +200,19 @@ function update () {
 	for (let i = 0; i < MAX_ENEMIES; i++){
 		enemies[i].x--;
 	}
+
+	bg1.x--;
+	bg2.x--;
+
+	if (bg1.x <= -313 ){
+		bg1.x = scene_w + 313;
+	}
+	if (bg2.x <= -313 ){
+		bg2.x = scene_w + 313;
+	}
+
+score.setText('Meteoritos destruidos: ' + points);
+
 }
 
 const config = {
