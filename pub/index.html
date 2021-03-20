@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Juegaco Phaser</title>
+
+<!-- script src="//cdnjs.cloudflare.com/ajax/libs/phaser/3.52.0/phaser.min.js"></script -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/phaser/3.52.0/phaser-arcade-physics.min.js"></script>
+</head>
+
+<body>
+<h1>Nuestro fantástico juego de JS/Phaser</h1>
+
+<script>
+const scene_w = 640;
+const scene_h = 480;
+
+const config = {
+	type: Phaser.CANVAS,
+	width: scene_w,
+	height: scene_h,
+	pixelArt: true,
+	physics: {
+		default: 'arcade',
+		arcade: {
+			debug:true,
+//			gravity: { x: 10 }
+		}
+	},
+	scene: {
+		preload: precarga,
+		create: crear,
+		update: actualiza
+	}
+};
+
+let game = new Phaser.Game(config);
+
+let bg;
+
+let car = [];
+
+let car_left_top_x = -128;
+let car_left_top_y = scene_h/2 + 52;
+
+let car_left_bottom_x = -128;
+let car_left_bottom_y = scene_h/2 + 136;
+
+let car_right_top_x = scene_w+128;
+let car_right_top_y = scene_h/2 - 52;
+
+let car_right_bottom_x = scene_w+128;
+let car_right_bottom_y = scene_h/2 - 136;
+
+let car_speed = 2;
+
+let player;
+let player_init_x = scene_w/2
+let player_init_y = scene_h - 32;
+
+let car_speed = 2;
+
+let up_key;
+let right_key;
+let down_key;
+let left_key;
+
+<<<<<<< HEAD
+let car_list = ["v", 3];
+=======
+let score_txt;
+
+let particles;
+
+let the_game;
+>>>>>>> db625c9cd0ab346f624424bedda4481727ac5cd3
+
+function precarga ()
+{
+	the_game = this;
+
+	this.load.image("background", "road.jpg");
+
+	this.load.image("car1", "PNG/Cars/ambulance.png");
+	this.load.image("car2", "PNG/Cars/police.png");
+	this.load.image("car3", "PNG/Cars/sedan.png");
+	this.load.image("car4", "PNG/Cars/scooter.png");
+	this.load.image("car5", "PNG/Cars/ambulance.png");
+	this.load.image("car6", "PNG/Cars/ambulance.png");
+
+	this.load.image("character", "PNG/Characters/woman.png");
+	this.load.image("smoke","smoke.png");
+}
+
+
+function crear ()
+{
+	car = [];
+
+	particles = this.add.particles('smoke');
+	
+	bg = this.add.image(scene_w/2, scene_h/2, "background");
+
+	car.push(this.physics.add.image(car_left_top_x, car_left_top_y, "car1"));
+	car.push(this.physics.add.image(car_left_bottom_x, car_left_bottom_y, "car2"));
+
+	car.push(this.physics.add.image(car_right_top_x, car_right_top_y, "car3"));
+	car.push(this.physics.add.image(car_right_bottom_x, car_right_bottom_y, "car4"));
+
+	console.log("en número de coches es: ",car.length);
+
+	player = this.physics.add.image(player_init_x, player_init_y, "character");
+
+	bg.setScale(2);
+	
+	car[0].velocidad = 2;
+
+	car[0].setScale(4);
+	car[1].setScale(4);
+
+	car[2].setScale(4);
+	car[2].flipX = true;
+
+	car[3].setScale(4);
+	car[3].flipX = true;
+
+	player.setScale(4);
+
+	up_key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+	right_key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
+	down_key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
+	left_key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
+
+
+	//Particula
+	particles = this.add.particles('smoke');
+
+	particles.createEmitter({
+		alpha: { start: 1, end: 0 },
+		scale: { start: 0.01, end: 0.2 },
+		tint: { start: 0x000000, end: 0xff945e },
+		speed: 10,
+		accelerationY: -150,
+		angle: { min: -85, max: -95 },
+		rotate: { min: -180, max: 180 },
+		blendMode: 'ADD',
+		frequency: 110,
+		x:0,
+		y:0
+	});	
+
+	car.forEach(function(element){
+		the_game.physics.add.overlap(player, element, function (p, c) {
+			the_game.scene.restart();
+		}, null, the_game);
+	});
+
+
+}
+
+
+function comprueba_coche(coche)
+{
+	if(coche.flipX){
+		if(coche.x <= -128 ){
+			coche.x = car_right_top_x + 10;
+		}
+	}
+	else{
+		if(coche.x > scene_w + 100){
+			coche.x = car_left_top_x;
+		
+		}
+	}
+}
+
+function comprueba_coche(coche)
+{
+	if (coche.flipX){
+		if (coche.x <= -128){
+			coche.x = car_right_top_x;
+		}
+	}
+	else{
+		if (coche.x >= scene_w +128)
+			coche.x = car_left_top_x;
+	}
+}
+
+
+
+function actualiza ()
+{
+	if (up_key.isDown){
+		player.y--;
+	}
+	else if (down_key.isDown){
+		player.y++;
+	}
+	
+	if (right_key.isDown){
+		player.x++;
+	}
+	else if (left_key.isDown){
+		player.x--;
+	}
+
+<<<<<<< HEAD
+	
+	car.forEach(coche =>{
+		if (coche.flipX){
+			coche.x -= car_speed; 
+		}
+		else{
+			coche.x += car_speed;
+		}
+	});
+		
+	car.forEach(comprueba_coche);
+	
+=======
+	particles.x = player.x;
+	particles.y = player.y;
+/*	
+	car[0].x += 8;
+	car[1].x += 8;
+	car[2].x -= 8;
+	car[3].x -= 8;
+*/
+	car.forEach((coche, index, array) =>{
+		if(coche.flipX){
+			coche.x -= car_speed;
+
+		}else{
+			coche.x += car_speed;
+		}
+	});
+	car.forEach(comprueba_coche);
+
+>>>>>>> db625c9cd0ab346f624424bedda4481727ac5cd3
+}
+</script>
+
+
+</body>
+</html>
